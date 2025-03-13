@@ -123,7 +123,7 @@ def generate_certificate(private_key, subject_details, oid_dict=None, cert_type=
         )
 
     # CRL Distribution Points
-    crl_url = "http://example.com/crl.crl"
+    crl_url = "http://crl-example.com/revocation/crl.crl"
 
     crl_distribution_point = UniformResourceIdentifier(crl_url)
 
@@ -235,9 +235,15 @@ def generate_certificate(private_key, subject_details, oid_dict=None, cert_type=
 
     # Basic Constraints (CA certificate)
     if cert_type == "ca":
-        cert_builder = cert_builder.add_extension(
-            BasicConstraints(ca=True, path_length=None), critical=True
-        )
+        ccaInput = input("Is this a CCA certificate (y/n)?").strip().lower()
+        if ccaInput == 'y':
+            cert_builder = cert_builder.add_extension(
+                BasicConstraints(ca=True, path_length=None), critical=True
+            )
+        else:
+            cert_builder = cert_builder.add_extension(
+                BasicConstraints(ca=True, path_length=0), critical=True
+            )
     else:
         cert_builder = cert_builder.add_extension(
             BasicConstraints(ca=False, path_length=None), critical=True
@@ -343,14 +349,23 @@ def save_private_key_to_pem(private_key, filename):
 
 def main():
     # Ask the user for certificate details
+    # subject_details = {
+    #     'CN': input("Enter common name (CN): ").strip(),
+    #     'O': input("Enter organization (O): ").strip(),
+    #     'OU': input("Enter organizational unit (OU): ").strip(),
+    #     'C': input("Enter country (C): ").strip(),
+    #     'L': input("Enter locality (L): ").strip(),
+    #     'ST': input("Enter state (ST): ").strip(),
+    #     'postalCode': input("Enter postal code (P): ").strip()
+    # }
     subject_details = {
-        'CN': input("Enter common name (CN): ").strip(),
-        'O': input("Enter organization (O): ").strip(),
-        'OU': input("Enter organizational unit (OU): ").strip(),
-        'C': input("Enter country (C): ").strip(),
-        'L': input("Enter locality (L): ").strip(),
-        'ST': input("Enter state (ST): ").strip(),
-        'postalCode': input("Enter postal code (P): ").strip()
+        'CN': "CCA India 2025",
+        'O': "India PKI",
+        'OU': "Certifying Authority",
+        'C': "IN",
+        'L': "Bangalore",
+        'ST': "Karnataka",
+        'postalCode': "560100"
     }
 
     # Ask user whether it's a CA or end entity certificate
@@ -382,8 +397,8 @@ def main():
     signed_certificate = self_sign_certificate(cert_builder, private_key)
 
     # Save the signed certificate and private key
-    save_certificate_to_pem(signed_certificate, "self_signed_cert_"+cert_type+".cer")
-    save_private_key_to_pem(private_key, "self_signed_private_key.pem")
+    save_certificate_to_pem(signed_certificate, "Root_"+cert_type.upper()+".cer")
+    save_private_key_to_pem(private_key, "Root_"+cert_type.upper()+"_key.pem")
 
     print("Signed certificate and private key have been saved.")
 
